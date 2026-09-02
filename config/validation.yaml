@@ -1,0 +1,18 @@
+mandatoryFields:
+  - request_id
+  - username
+  - first_name
+  - email
+  - groups
+  - roles
+  - action
+
+allowedActions:
+  - CREATE
+  - SKIP
+  - ADDUSERTOGROUP
+
+emailRegex: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+
+duplicateHandling:
+  defaultAction: "SKIP"

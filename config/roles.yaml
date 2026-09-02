@@ -1,0 +1,5 @@
+allowedRoles:
+  - CRI#REGISTRY (CRI)
+  - Checker
+  - Viewer
+  - Supervisor

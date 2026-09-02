@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "lib": ["ES2022", "dom"],
+    "outDir": "./dist",
+    "rootDir": ".",
+    "strict": true,
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "Node16"
+  },
+  "include": ["src/**/*", "playwright.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

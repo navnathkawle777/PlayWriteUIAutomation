@@ -1,0 +1,27 @@
+{
+  "name": "newgen-user-provisioning",
+  "version": "1.0.0",
+  "description": "Automated Newgen user provisioning with Playwright",
+  "main": "src/main.ts",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "debug:uat": "PWDEBUG=1 ts-node src/main.ts --env uat",
+    "validate:uat": "ts-node src/main.ts --env uat --dry-run",
+    "validate:prod": "ts-node src/main.ts --env prod --dry-run",
+    "run:uat": "ts-node src/main.ts --env uat",
+    "run:prod": "ts-node src/main.ts --env prod"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.45.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "winston": "^3.13.0",
+    "xlsx": "^0.18.5",
+    "yaml": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.0"
+  }
+}

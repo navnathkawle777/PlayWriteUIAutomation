@@ -1,0 +1,5 @@
+allowedGroups:
+  - CRI
+  - Claims_Checker
+  - Claims_Viewer
+  - Admin_ReadOnly
