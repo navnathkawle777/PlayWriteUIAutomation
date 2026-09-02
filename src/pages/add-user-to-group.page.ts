@@ -49,12 +49,14 @@ export class AddUserToGroupPage {
         logger.warn('Error occurred during group assignment, but continuing...');
       }
 
-      // Capture screenshot before closing
+      // Capture the saved state before confirmation closes the popup page.
       logger.info('Capturing screenshot after group assignment');
       const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
       const screenshotPath = `output/screenshots/GROUPASSIGNMENT_${timestamp}.png`;
       await this.page.screenshot({ path: screenshotPath });
       logger.info(`Screenshot captured: ${screenshotPath}`);
+
+      await this.closeSuccessPopup();
 
       logger.info('Group assignment completed successfully');
       return true;
@@ -111,80 +113,72 @@ export class AddUserToGroupPage {
       // Press Enter to search
       logger.info('Pressing Enter to search for group');
       await searchField.press('Enter');
-      await this.page.waitForTimeout(1500);
 
-      // Find the group in the results
-      logger.info(`Looking for group result: "${groupName}"`);
-      const groupResult = await this.findGroupInResults(groupName);
-      
-      if (!groupResult) {
-        logger.warn(`Group "${groupName}" not found in results`);
+      const noRecordsFound = this.page.getByText('No Records Found', { exact: true }).first();
+      const escapedGroupName = groupName.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+      const matchingGroupLabel = this.page.locator(
+        '[id^="usermgmt:usergrouplistTable:"][id$=":GroupNameDisplay"]'
+      ).filter({ hasText: new RegExp(`^${escapedGroupName}$`) });
+
+      logger.info(`Waiting for search results for group "${groupName}"`);
+      await this.page.waitForFunction(
+        ({ groupName, noRecordsText }) => {
+          const isVisible = (element: Element | null): boolean => {
+            if (!element) {
+              return false;
+            }
+
+            const styles = window.getComputedStyle(element);
+            return styles.visibility !== 'hidden' && styles.display !== 'none';
+          };
+
+          return Array.from(document.querySelectorAll('*')).some(element =>
+            isVisible(element) &&
+            (element.textContent?.trim() === groupName || element.textContent?.trim() === noRecordsText)
+          );
+        },
+        { groupName, noRecordsText: 'No Records Found' },
+        { timeout: 10000 }
+      );
+
+      if (await noRecordsFound.isVisible({ timeout: 500 }).catch(() => false)) {
+        logger.warn(`No results found for group "${groupName}"`);
         return false;
       }
 
-      // Get the row index to construct the checkbox selector
-      logger.info(`Found group "${groupName}", selecting it...`);
-      
-      // Find all checkboxes in the user group list table
-      const checkboxes = await this.page.locator('[id*="usermgmt:usergrouplistTable"][id*="usergrouplistchkBox"]').all();
-      
-      if (checkboxes.length === 0) {
-        logger.warn('No group checkboxes found in the table');
+      const matchingLabel = matchingGroupLabel.first();
+      const matchingLabelId = await matchingLabel.getAttribute('id');
+      if (!matchingLabelId) {
+        logger.warn(`Matching group label has no ID for group "${groupName}"`);
         return false;
       }
 
-      // Check the first unchecked checkbox (which should be our group)
-      for (const checkbox of checkboxes) {
-        const isChecked = await checkbox.isChecked().catch(() => false);
-        if (!isChecked) {
-          logger.info(`Checking group checkbox`);
-          await checkbox.check();
-          await this.page.waitForTimeout(500);
-          
-          // Click Add button
-          logger.info(`Clicking Add button`);
-          const addButton = this.page.getByRole('button', { name: 'Add' }).first();
-          await addButton.click();
-          await this.page.waitForTimeout(1000);
-          
-          return true;
-        }
+      // The label and checkbox IDs share the same result index.
+      const checkboxId = matchingLabelId.replace(
+        ':GroupNameDisplay',
+        ':usergrouplistchkBox'
+      );
+      const resultCheckbox = this.page.locator(`[id="${checkboxId}"]`);
+      const checkboxVisible = await resultCheckbox.isVisible({ timeout: 2000 }).catch(() => false);
+      if (!checkboxVisible) {
+        logger.warn(`No selectable result found for matching group "${groupName}"`);
+        return false;
       }
 
-      logger.warn('No unchecked group checkbox found');
-      return false;
+      logger.info(`Found result for group "${groupName}", selecting it...`);
+      if (!await resultCheckbox.isChecked()) {
+        await resultCheckbox.check();
+        await this.page.waitForTimeout(500);
+      }
+
+      logger.info('Clicking Add button');
+      const addButton = this.page.getByRole('button', { name: 'Add' }).first();
+      await addButton.click();
+      await this.page.waitForTimeout(1000);
+
+      return true;
     } catch (error) {
       logger.error(`Error searching and adding group "${groupName}": ${error}`);
-      return false;
-    }
-  }
-
-  /**
-   * Find a group in the search results
-   */
-  private async findGroupInResults(groupName: string): Promise<boolean> {
-    try {
-      // Look for the group in the table - exact match first
-      const groupCell = this.page.getByText(groupName, { exact: true }).first();
-      const isVisible = await groupCell.isVisible({ timeout: 2000 }).catch(() => false);
-      
-      if (isVisible) {
-        logger.info(`Found exact match for group "${groupName}"`);
-        return true;
-      }
-
-      // Try partial match
-      const partialMatch = this.page.getByText(new RegExp(groupName, 'i')).first();
-      const partialVisible = await partialMatch.isVisible({ timeout: 2000 }).catch(() => false);
-      
-      if (partialVisible) {
-        logger.info(`Found partial match for group "${groupName}"`);
-        return true;
-      }
-
-      return false;
-    } catch (error) {
-      logger.warn(`Error finding group in results: ${error}`);
       return false;
     }
   }
@@ -239,6 +233,19 @@ export class AddUserToGroupPage {
     } catch (error) {
       logger.debug(`Error checking for error popup: ${error}`);
       return false;
+    }
+  }
+
+  /**
+   * Close the confirmation displayed after a successful save.
+   */
+  private async closeSuccessPopup(): Promise<void> {
+    const okButton = this.page.locator('[id="usermgmt:successpanel:ngcmdOk"]');
+    const isVisible = await okButton.isVisible({ timeout: 2000 }).catch(() => false);
+
+    if (isVisible) {
+      logger.info('Closing group assignment success confirmation');
+      await okButton.click();
     }
   }
 

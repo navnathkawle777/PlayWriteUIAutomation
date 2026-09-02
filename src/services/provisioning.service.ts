@@ -5,6 +5,7 @@ import { LoginPage } from '../pages/login.page';
 import { UserManagementPage } from '../pages/user-management.page';
 import { AddUserPage } from '../pages/add-user.page';
 import { AddUserToGroupPage } from '../pages/add-user-to-group.page';
+import { AddUserToGroupRolePage } from '../pages/add-user-to-group-role';
 import { EvidenceService } from './evidence.service';
 import { logger } from '../config/logger';
 
@@ -118,6 +119,10 @@ export class ProvisioningService {
       // Handle ADDUSERTOGROUP action
       if (user.action === 'ADDUSERTOGROUP') {
         return await this.addUserToGroup(user, startTime);
+      }
+
+      if (user.action === 'ADDUSERINGROUPROLE') {
+        return await this.addUserInGroupRole(user, startTime);
       }
 
       const userMgmtPage = new UserManagementPage(this.page);
@@ -375,6 +380,40 @@ export class ProvisioningService {
         screenshot_path: screenshotPath,
         trace_path: networkPath,
         video_path: consolePath,
+        timestamp: startTime
+      };
+    }
+  }
+
+  private async addUserInGroupRole(user: UserRecord, startTime: string): Promise<ExecutionResult> {
+    try {
+      if (!user.roles) {
+        throw new Error('Roles field is required for ADDUSERINGROUPROLE action');
+      }
+
+      logger.info(`Starting ADDUSERINGROUPROLE workflow for user: ${user.username}`);
+      const groupRolePage = new AddUserToGroupRolePage(this.page);
+      const rolesAdded = await groupRolePage.addUserToGroupRoles(user.username, user.roles);
+      if (!rolesAdded) {
+        throw new Error('Failed to add user roles to groups');
+      }
+
+      return {
+        request_id: user.request_id,
+        username: user.username,
+        action: user.action,
+        status: 'SUCCESS',
+        message: `User successfully assigned group roles: ${user.roles}`,
+        timestamp: startTime
+      };
+    } catch (error) {
+      logger.error(`Failed to add group roles for ${user.username}: ${error}`);
+      return {
+        request_id: user.request_id,
+        username: user.username,
+        action: user.action,
+        status: 'FAILED',
+        message: error instanceof Error ? error.message : String(error),
         timestamp: startTime
       };
     }
