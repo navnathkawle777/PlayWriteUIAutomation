@@ -296,6 +296,10 @@ export class LoginPage {
     logger.info(`Logging out user: ${username}`);
     
     try {
+      // A "layout saved" toast can overlay the username label and block the click
+      const toaster = this.page.locator('#custom_toaster');
+      await toaster.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+
       // Click on user profile/username
       await this.page.getByText(username).click({ timeout: 5000 });
       logger.info('User profile clicked');

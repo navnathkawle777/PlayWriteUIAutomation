@@ -9,7 +9,14 @@ export class SaveUserPreferenceLayoutPage {
   async saveLayout(username: string): Promise<LayoutView> {
     logger.info(`Saving user preference layout for "${username}"`);
     const selectedView = await this.selectView(username);
+    await this.page.waitForLoadState('networkidle').catch(() => {});
+
+    // Re-open the user menu so "Save Layout" is available after the view has loaded
+    const usernameLink = this.page.getByText(username, { exact: true });
+    await usernameLink.click();
+
     await this.clickSaveLayout();
+    await this.waitForSaveToast();
     logger.info(`Layout saved for "${username}" using "${selectedView}" view`);
     return selectedView;
   }
@@ -40,5 +47,12 @@ export class SaveUserPreferenceLayoutPage {
 
   private async clickSaveLayout(): Promise<void> {
     await this.page.getByText('Save Layout', { exact: true }).click();
+  }
+
+  // The "Current view layout has been saved." toast overlays the username label and blocks the next click
+  private async waitForSaveToast(): Promise<void> {
+    const toaster = this.page.locator('#custom_toaster');
+    await toaster.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+    await toaster.waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
   }
 }

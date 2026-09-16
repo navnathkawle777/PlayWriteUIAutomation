@@ -60,6 +60,12 @@ async function saveLayoutForUser(
 
     logger.info(`Layout saved successfully for user "${user.username}" using "${selectedView}" view`);
 
+    try {
+      await loginPage.logout(user.username);
+    } catch (logoutError) {
+      logger.warn(`Logout failed for user "${user.username}", continuing: ${logoutError}`);
+    }
+
     return {
       request_id: user.request_id,
       username: user.username,
