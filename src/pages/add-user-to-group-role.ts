@@ -108,7 +108,7 @@ export class AddUserToGroupRolePage {
 
     for (const roleName of roleNames) {
       await roleSelect.selectOption({ label: roleName });
-      popup.once('dialog', dialog => dialog.dismiss().catch(() => {}));
+      popup.once('dialog', dialog => dialog.accept().catch(() => {}));
       await popup.getByRole('button', { name: 'Add', exact: true }).click();
       logger.info(`Added role "${roleName}" for user "${username}"`);
     }
