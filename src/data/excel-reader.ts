@@ -17,6 +17,7 @@ export class ExcelReader {
     return data.map((row) => ({
       request_id: String(row.request_id || '').trim(),
       username: String(row.username || '').trim(),
+      password: row.password ? String(row.password).trim() : undefined,
       first_name: String(row.first_name || '').trim(),
       last_name: String(row.last_name || '').trim(),
       email: String(row.email || '').trim(),

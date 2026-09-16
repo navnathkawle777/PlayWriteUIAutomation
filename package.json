@@ -9,7 +9,9 @@
     "validate:uat": "ts-node src/main.ts --env uat --dry-run",
     "validate:prod": "ts-node src/main.ts --env prod --dry-run",
     "run:uat": "ts-node src/main.ts --env uat",
-    "run:prod": "ts-node src/main.ts --env prod"
+    "run:prod": "ts-node src/main.ts --env prod",
+    "save-layout:uat": "ts-node src/save-layout-main.ts --env uat",
+    "save-layout:prod": "ts-node src/save-layout-main.ts --env prod"
   },
   "dependencies": {
     "@playwright/test": "^1.45.0",
