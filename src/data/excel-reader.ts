@@ -26,6 +26,7 @@ export class ExcelReader {
       groups: String(row.groups || '').trim(),
       roles: String(row.roles || '').trim(),
       action: String(row.action || '').trim().toUpperCase(),
+      status: row.status ? String(row.status).trim().toUpperCase() : undefined,
       remarks: row.remarks ? String(row.remarks).trim() : undefined,
       country: row.country ? String(row.country).trim() : undefined,
       security: row.security ? String(row.security).trim() : undefined,

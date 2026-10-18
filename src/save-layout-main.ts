@@ -99,9 +99,23 @@ async function main(): Promise<void> {
   const users = ExcelReader.readUsers(inputPath);
   const evidenceService = new EvidenceService(config.evidence.outputDir);
 
-  const usersWithCredentials = users.filter(user => user.username && user.password);
+  const usersWithCredentials = users.filter(user => {
+    if (user.action !== 'SAVELAYOUT') {
+      return false;
+    }
+    if (!user.username || !user.password) {
+      logger.warn(`Skipping request_id "${user.request_id}" - missing username or password`);
+      return false;
+    }
+    if (user.status === 'SUCCESS') {
+      logger.info(`Skipping "${user.username}" - layout already saved (status=SUCCESS)`);
+      return false;
+    }
+    return true;
+  });
+
   if (usersWithCredentials.length === 0) {
-    logger.info('No users with both username and password found in Excel - nothing to do');
+    logger.info('No SAVELAYOUT users left to process - nothing to do');
     return;
   }
 

@@ -10,6 +10,7 @@ export interface UserRecord {
   groups: string;
   roles: string;
   action: string;
+  status?: string;
   remarks?: string;
  
   // Dropdown fields
